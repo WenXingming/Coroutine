@@ -79,10 +79,71 @@ void test_concurrency_with_worker_threads() {
 }
 
 
+/// =========================
+/// 测试协程类：Fiber.h、FiberControl.h
+#include "Fiber.h"
+#include "FiberControl.h"
+using namespace wxm;
+
+class Scheduler {
+private:
+	std::vector<std::shared_ptr<Fiber>> m_tasks;
+public:
+
+	// 添加协程调度任务
+	void schedule(std::shared_ptr<Fiber> task)
+	{
+		m_tasks.push_back(task);
+	}
+
+	// 执行调度任务
+	void run()
+	{
+		std::cout << " number " << m_tasks.size() << std::endl;
+
+		std::shared_ptr<Fiber> task;
+		auto it = m_tasks.begin();
+		while(it!=m_tasks.end()) {
+			task = *it;
+			// 由主协程切换到子协程，子协程函数运行完毕后自动切换到主协程
+            task->resume();
+			it++;
+		}
+		m_tasks.clear();
+	}
+
+
+};
+
+
+void test_fiber_total() {
+    std::cout << "--- Testing test_fiber_total ---" << std::endl;
+    // 初始化当前线程的主协程
+    FiberControl::get_running_fiber();
+    // 创建调度器、添加调度任务（任务和子协程绑定）
+    Scheduler sc;
+    for (auto i = 0;i < 20;i++) {
+        // 创建子协程
+        // 使用共享指针自动管理资源 -> 过期后自动释放子协程创建的资源
+        // bind函数 -> 绑定函数和参数用来返回一个函数对象
+        auto func = [](int i) {
+            std::cout << "hello world " << i << std::endl;
+            };
+        std::shared_ptr<Fiber> fiber = std::make_shared<Fiber>(std::bind(func, i), 0, false);
+        sc.schedule(fiber);
+    }
+
+    // 执行调度任务
+    sc.run();
+    std::cout << "--- test_fiber_total Passed ---" << std::endl;
+}
+
 int main() {
     test_basic_semaphore();
     std::cout << "\n";
     test_concurrency_with_worker_threads();
+    std::cout << "\n";
+    test_fiber_total();
     std::cout << "\n";
 
     std::cout << "All tests completed successfully!\n" << std::endl;
