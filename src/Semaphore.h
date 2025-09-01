@@ -1,6 +1,6 @@
 /**
  * @file Semaphore.h
- * @brief 信号量类
+ * @brief 信号量类。Declaration of class
  * @details 自定义实现 C++ 信号量
  * @author wenxingming
  * @date 2025-08-29
@@ -15,8 +15,7 @@
 namespace wxm {
 
 
-/// =============================================================================
-/// NOTE: Declaration of class
+
 class Semaphore {
 private:
     std::mutex mtx;
@@ -34,27 +33,4 @@ public:
 
 
 
-/// =============================================================================
-/// NOTE: Definition of class's member functions
-
-inline Semaphore::Semaphore(int _count = 0) : count(_count) {}
-
-inline Semaphore::~Semaphore() {}
-
-inline void Semaphore::wait() {
-    std::unique_lock<std::mutex> lock(mtx); // std::unique_lock 提供了灵活的锁定和解锁能力；std::lock_guard 完全 RAII，没有提供手动解锁的接口。
-    cv.wait(lock, [this]() {
-        return this->count != 0;
-        });
-    --count;
 }
-
-inline void Semaphore::signal() {
-    std::unique_lock<std::mutex> lock(mtx);
-    ++count;
-    cv.notify_one();
-}
-
-
-}
-
