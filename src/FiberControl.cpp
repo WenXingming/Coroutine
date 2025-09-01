@@ -1,33 +1,36 @@
- /**
-  * @file FiberControl.cpp
-  * @brief 线程内部协程的控制
-  * @details 主要是维护当前线程上的协程控制信息，方便进行线程内部协程的控制例如协程间的切换、后续调度
-  * @author wenxingming
-  * @date 2025-08-31
-  * @note My project address:
-  * @cite https://github.com/youngyangyang04/coroutine-lib/tree/main/fiber_lib/2fiber
-  */
+/**
+ * @file FiberControl.cpp
+ * @brief 线程内部协程的控制
+ * @details
+ * 主要是维护当前线程上的协程控制信息，方便进行线程内部协程的控制例如协程间的切换、后续调度
+ * @author wenxingming
+ * @date 2025-08-31
+ * @note My project address:
+ * @cite
+ * https://github.com/youngyangyang04/coroutine-lib/tree/main/fiber_lib/2fiber
+ */
 
+#include <memory>
 #include "Fiber.h" // 可以都包含
 #include "FiberControl.h"
 namespace wxm {
 
 
 
-// 静态成员变量不像成员变量可以在定义对象时初始化，必须手动初始化！生命周期与程序的生命周期相同
-// 注意，这里没有 "static"，因为它的属性在类中已经声明了
+/// @brief 静态成员变量不像成员变量可以在定义对象时初始化，必须手动初始化！生命周期与程序的生命周期相同。注意，这里没有 "static"，因为它的作用域属性在类中已经声明了
 thread_local std::shared_ptr<Fiber> FiberControl::runningFiber(nullptr);
 thread_local std::shared_ptr<Fiber> FiberControl::mainFiber(nullptr);
 thread_local std::shared_ptr<Fiber> FiberControl::schedulerFiber(nullptr);
-thread_local int FiberControl::threadFiberCount(0); 
+thread_local int FiberControl::threadFiberCount(0);
 thread_local bool FiberControl::debug = true;
 
 
+
 void FiberControl::first_create_fiber() {
-	// 这里会调用构造函数，构造函数会调用 set_running_fiber 设置 runningFiber（构造函数是不是应该调用 set_runninng_fiber？）
-	/// TODO: 待优化，组织代码结构。设计模式：工厂模式？
-	std::shared_ptr<Fiber> fiber = std::make_shared<Fiber>();
-	FiberControl::set_running_fiber(fiber); // what():  bad_weak_ptr。构造函数里面无法调用 set_running_fiber。
+	// Fiber() 私有，make_shared<T>() 无法访问！编译错误
+	// std::shared_ptr<Fiber> fiber = std::make_shared<Fiber>(); 
+	std::shared_ptr<Fiber> fiber(new Fiber());
+	FiberControl::set_running_fiber(fiber);
 	FiberControl::set_main_fiber(fiber);
 	FiberControl::set_scheduler_fiber(fiber); // 除非主动设置，主协程默认为调度协程
 
@@ -40,11 +43,23 @@ void FiberControl::first_create_fiber() {
 }
 
 
+std::shared_ptr<Fiber> FiberControl::create_fiber(std::function<void()> _cb, size_t _stacksize, bool _run_in_scheduler) {
+	if (!FiberControl::runningFiber) {
+		first_create_fiber();
+	}
+	// std::shared_ptr<Fiber> fiber = std::make_shared<Fiber>(_cb, _stacksize, _run_in_scheduler); // 构造函数私有，make_shared<>() 无法访问！编译错误
+	std::shared_ptr<Fiber> fiber(new Fiber(_cb, _stacksize, _run_in_scheduler));
+	auto id = get_thread_fiber_count();
+	set_thread_fiber_count(id + 1);
+	return fiber;
+}
+
+
 std::shared_ptr<Fiber> FiberControl::get_running_fiber() { // 首先运行该函数会创建主协程
-    if (!FiberControl::runningFiber) {
-        first_create_fiber();
-    }
-    return FiberControl::runningFiber;
+	if (!FiberControl::runningFiber) {
+		first_create_fiber();
+	}
+	return FiberControl::runningFiber;
 }
 
 
@@ -75,7 +90,7 @@ void FiberControl::set_main_fiber(std::shared_ptr<Fiber> fiber) {
 
 
 void FiberControl::set_scheduler_fiber(std::shared_ptr<Fiber> fiber) {
-    FiberControl::schedulerFiber = fiber;
+	FiberControl::schedulerFiber = fiber;
 }
 
 

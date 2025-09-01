@@ -8,9 +8,9 @@
  * @cite https://github.com/youngyangyang04/coroutine-lib/tree/main/fiber_lib/2fiber
  */
 
+#include <iostream>
 #include "Fiber.h"
 #include "FiberControl.h" // 可以都包含
-
 
 namespace wxm{
 /// =========================================================================
@@ -19,7 +19,6 @@ namespace wxm{
 wxm::Fiber::Fiber() {
     // FiberControl::set_running_fiber(shared_from_this());
 	id = FiberControl::get_thread_fiber_count();
-	FiberControl::set_thread_fiber_count(id + 1);
 
 	int retGetContext = getcontext(&context); // 使用 getcontext 是先将大部分信息初始化，我们到时候只需要修改我们所使用的部分信息即可
     if (retGetContext != 0) {
@@ -41,7 +40,6 @@ wxm::Fiber::Fiber() {
 
 wxm::Fiber::Fiber(std::function<void()> _cb, size_t _stacksize, bool _run_in_scheduler) {
 	id = FiberControl::get_thread_fiber_count();
-	FiberControl::set_thread_fiber_count(id + 1);
 
     int retGetContext = getcontext(&context);
     if (retGetContext != 0) {
@@ -88,8 +86,8 @@ inline void wxm::Fiber::reset(std::function<void()> _cb) {
     }
     context.uc_link = nullptr;
     context.uc_stack.ss_sp = stackPtr;
-    context.uc_stack.ss_size = stackSize; // 给该上下文指定一个栈空间 ucp->stack
-    makecontext(&context, /* task */ &Fiber::main_func, 0);
+    context.uc_stack.ss_size = stackSize;
+    makecontext(&context, &Fiber::main_func, 0);
 
     task = _cb;
     state = READY;

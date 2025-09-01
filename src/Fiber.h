@@ -9,22 +9,21 @@
  */
 
 #pragma once
-#include <iostream>
 #include <ucontext.h>
 #include <unistd.h>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <cassert>
-#include <thread>
 namespace wxm {
 
 
 
 class FiberControl; // 头文件不可相互包含，如何解决循环依赖问题？声明、实现分离（.h、.cpp），并在循环依赖的头文件中使用前向声明（源文件可以直接包含两个头文件声明）
+
 class Fiber : public std::enable_shared_from_this<Fiber> { // 允许一个类（Fiber）的对象安全地获取一个指向自身的 std::shared_ptr
 private:
-    enum State {  // 协程状态：准备、运行、结束
+	enum State {  // 协程状态：准备、运行、结束
         READY, RUNNING, TERM
     }; 
     
@@ -36,12 +35,14 @@ private:
     State state = READY;            // 协程状态
     bool runInScheduler;            // 是否让出执行权交给调度协程
 
+	friend class FiberControl; // FiberControl 需要调用 Fiber 的（私有）构造函数构造 Fiber。（工厂模式）
+	Fiber();
+	Fiber(std::function<void()> _cb, size_t _stacksize = 0, bool _run_in_scheduler = true);
+
 public:
     std::mutex mutex;
 
 public:
-    Fiber();
-    Fiber(std::function<void()> _cb, size_t _stacksize = 0, bool _run_in_scheduler = true);
     Fiber(const Fiber& other) = delete;
     Fiber& operator=(const Fiber& other) = delete;
     // 没写移动构造且定义了构造函数，不会默认生成移动构造。std::move() 时退化到拷贝构造（浅拷贝...）。

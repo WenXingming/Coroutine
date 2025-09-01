@@ -1,3 +1,4 @@
+#include <iostream>
 #include <vector>
 #include <thread>
 #include <chrono>
@@ -129,7 +130,7 @@ void test_fiber_total() {
         auto func = [](int i) {
             std::cout << "hello world " << i << std::endl;
             };
-        std::shared_ptr<Fiber> fiber = std::make_shared<Fiber>(std::bind(func, i), 0, false);
+		std::shared_ptr<Fiber> fiber = FiberControl::create_fiber(std::bind(func, i), 0, false);
         sc.schedule(fiber);
     }
 

@@ -28,7 +28,10 @@ private:
 	static thread_local bool debug;
 
 public:
-	static void first_create_fiber(); // 如果没有协程，则调用此函数创建协程（并初始化线程中协程的 FiberControl 信息）
+	// 如果没有协程，则调用此函数创建协程（并初始化线程中协程的 FiberControl 信息）
+	static void first_create_fiber(); 
+	// 工厂模式。Fiber 构造函数私有化，使用 FiberControl 接口进行 Fiber 创建
+	static std::shared_ptr<Fiber> create_fiber(std::function<void()> _cb, size_t _stacksize = 0, bool _run_in_scheduler = true);
 
 	static std::shared_ptr<Fiber> get_running_fiber();
 	static std::shared_ptr<Fiber> get_main_fiber();
