@@ -20,10 +20,6 @@ wxm::Fiber::Fiber() {
     // FiberControl::set_running_fiber(shared_from_this());
 	id = FiberControl::get_thread_fiber_count();
 	FiberControl::set_thread_fiber_count(id + 1);
-	// 维护一下 thread_control
-	// int liveId = FiberControl::get_live_fiber_count();
-	// FiberControl::set_live_fiber_count(++liveId);
-
 
 	int retGetContext = getcontext(&context); // 使用 getcontext 是先将大部分信息初始化，我们到时候只需要修改我们所使用的部分信息即可
     if (retGetContext != 0) {
@@ -46,9 +42,6 @@ wxm::Fiber::Fiber() {
 wxm::Fiber::Fiber(std::function<void()> _cb, size_t _stacksize, bool _run_in_scheduler) {
 	id = FiberControl::get_thread_fiber_count();
 	FiberControl::set_thread_fiber_count(id + 1);
-	// 维护一下 thread_control
-	// int liveId = FiberControl::get_live_fiber_count();
-	// FiberControl::set_live_fiber_count(++liveId);
 
     int retGetContext = getcontext(&context);
     if (retGetContext != 0) {

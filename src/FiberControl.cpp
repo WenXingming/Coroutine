@@ -20,7 +20,6 @@ thread_local std::shared_ptr<Fiber> FiberControl::runningFiber(nullptr);
 thread_local std::shared_ptr<Fiber> FiberControl::mainFiber(nullptr);
 thread_local std::shared_ptr<Fiber> FiberControl::schedulerFiber(nullptr);
 thread_local int FiberControl::threadFiberCount(0); 
-// thread_local int FiberControl::liveFiberCount(0); // 创建协程时分配 id
 thread_local bool FiberControl::debug = true;
 
 
@@ -37,9 +36,7 @@ void FiberControl::first_create_fiber() {
 	assert(FiberControl::schedulerFiber == fiber);
 
 	int threadFiberCount = get_thread_fiber_count();
-	// int liveFiberCount = get_live_fiber_count();
 	FiberControl::set_thread_fiber_count(++threadFiberCount);
-	// FiberControl::set_live_fiber_count(++liveFiberCount);
 }
 
 
@@ -90,16 +87,6 @@ int FiberControl::get_thread_fiber_count() {
 void FiberControl::set_thread_fiber_count(int val) {
 	FiberControl::threadFiberCount = val;
 }
-
-
-// int FiberControl::get_live_fiber_count() {
-// 	return liveFiberCount;
-// }
-
-
-// void FiberControl::set_live_fiber_count(int val) {
-// 	liveFiberCount = val;
-// }
 
 
 bool FiberControl::get_debug() {
