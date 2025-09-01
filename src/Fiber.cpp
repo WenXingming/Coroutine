@@ -73,7 +73,7 @@ wxm::Fiber::~Fiber() {
 }
 
 
-inline void wxm::Fiber::reset(std::function<void()> _cb) {
+void wxm::Fiber::reset(std::function<void()> _cb) {
     if (!stackPtr || state != TERM) {
         std::cerr << "reset error." << std::endl;
         assert(stackPtr && state == TERM);
@@ -116,7 +116,7 @@ void wxm::Fiber::resume() {
 }
 
 
-inline void wxm::Fiber::yield() {
+void wxm::Fiber::yield() {
     assert(state == RUNNING || state == TERM);
 
     if (state == RUNNING) state = READY;
@@ -150,7 +150,7 @@ wxm::Fiber::State wxm::Fiber::get_state() const {
 }
 
 
-inline void wxm::Fiber::main_func() {
+void wxm::Fiber::main_func() {
     auto curr = FiberControl::get_running_fiber();
     assert(curr);
 
