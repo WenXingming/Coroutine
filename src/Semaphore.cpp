@@ -14,7 +14,7 @@ namespace wxm {
 
 
 
-Semaphore::Semaphore(int _count = 0) : count(_count) {}
+Semaphore::Semaphore(int _count) : count(_count) {}
 
 Semaphore::~Semaphore() {}
 
