@@ -88,30 +88,28 @@ using namespace wxm;
 
 class Scheduler {
 private:
-	std::vector<std::shared_ptr<Fiber>> m_tasks;
+    std::vector<std::shared_ptr<Fiber>> m_tasks;
 public:
 
-	// 添加协程调度任务
-	void schedule(std::shared_ptr<Fiber> task)
-	{
-		m_tasks.push_back(task);
-	}
+    // 添加协程调度任务
+    void schedule(std::shared_ptr<Fiber> task) {
+        m_tasks.push_back(task);
+    }
 
-	// 执行调度任务
-	void run()
-	{
-		std::cout << " number " << m_tasks.size() << std::endl;
+    // 执行调度任务
+    void run() {
+        std::cout << " number " << m_tasks.size() << std::endl;
 
-		std::shared_ptr<Fiber> task;
-		auto it = m_tasks.begin();
-		while(it!=m_tasks.end()) {
-			task = *it;
-			// 由主协程切换到子协程，子协程函数运行完毕后自动切换到主协程
+        std::shared_ptr<Fiber> task;
+        auto it = m_tasks.begin();
+        while (it != m_tasks.end()) {
+            task = *it;
+            // 由主协程切换到子协程，子协程函数运行完毕后自动切换到主协程
             task->resume();
-			it++;
-		}
-		m_tasks.clear();
-	}
+            it++;
+        }
+        m_tasks.clear();
+    }
 
 
 };
@@ -130,7 +128,7 @@ void test_fiber_total() {
         auto func = [](int i) {
             std::cout << "hello world " << i << std::endl;
             };
-		std::shared_ptr<Fiber> fiber = FiberControl::create_fiber(std::bind(func, i), 0, false);
+        std::shared_ptr<Fiber> fiber = FiberControl::create_fiber(std::bind(func, i), 0, false);
         sc.schedule(fiber);
     }
 

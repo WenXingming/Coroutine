@@ -14,22 +14,20 @@
 namespace wxm {
 
 
+    class Semaphore {
+    private:
+        std::mutex mtx;
+        std::condition_variable cv;
+        int count;                      // 使用原子变量还是锁？需要使用锁，因为 Semaphore::wait() 里要保护临界区（count 的判断和修改）
 
-class Semaphore {
-private:
-    std::mutex mtx;
-    std::condition_variable cv;
-    int count;                      // 使用原子变量还是锁？需要使用锁，因为 Semaphore::wait() 里要保护临界区（count 的判断和修改）
+    public:
+        explicit Semaphore(int _count = 0); // explicit: 构造函数只能被显式地调用，不允许进行隐式转换。
+        ~Semaphore();
 
-public:
-    explicit Semaphore(int _count = 0); // explicit: 构造函数只能被显式地调用，不允许进行隐式转换。
-    ~Semaphore();
-
-    // PV 操作
-    void wait();
-    void signal();
-};
-
+        // PV 操作
+        void wait();
+        void signal();
+    };
 
 
 }

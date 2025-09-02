@@ -13,25 +13,23 @@
 namespace wxm {
 
 
+    Semaphore::Semaphore(int _count) : count(_count) {}
 
-Semaphore::Semaphore(int _count) : count(_count) {}
+    Semaphore::~Semaphore() {}
 
-Semaphore::~Semaphore() {}
+    void Semaphore::wait() {
+        std::unique_lock<std::mutex> lock(mtx); // std::unique_lock 提供了灵活的锁定和解锁能力；std::lock_guard 完全 RAII，没有提供手动解锁的接口。
+        cv.wait(lock, [this]() {
+            return this->count != 0;
+            });
+        --count;
+    }
 
-void Semaphore::wait() {
-    std::unique_lock<std::mutex> lock(mtx); // std::unique_lock 提供了灵活的锁定和解锁能力；std::lock_guard 完全 RAII，没有提供手动解锁的接口。
-    cv.wait(lock, [this]() {
-        return this->count != 0;
-        });
-    --count;
-}
-
-void Semaphore::signal() {
-    std::unique_lock<std::mutex> lock(mtx);
-    ++count;
-    cv.notify_one();
-}
-
+    void Semaphore::signal() {
+        std::unique_lock<std::mutex> lock(mtx);
+        ++count;
+        cv.notify_one();
+    }
 
 
 }
