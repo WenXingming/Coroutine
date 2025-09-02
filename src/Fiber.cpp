@@ -50,7 +50,7 @@ namespace wxm {
         stackPtr = operator new(stackSize);
         context.uc_link = nullptr;
         context.uc_stack.ss_sp = stackPtr;
-        context.uc_stack.ss_size = stackSize; // 给该上下文指定一个栈空间 ucp->stack
+        context.uc_stack.ss_size = stackSize;
         makecontext(&context, &Fiber::main_func, 0); // makecontext 修改通过 getcontext 取得的上下文 ucp (这意味着调用makecontext前必须先调用getcontext)。
 
         task = _cb;
@@ -94,46 +94,62 @@ namespace wxm {
     }
 
 
+    /// @brief 当前 context 放到 cpu，cpu 状态放到调度协程（或主协程）。维护 FiberControl（不够高内聚、低耦合）。
+    /// @details 总之，流程可以统一为先维护 runningFiber，然后把 runningFiber->context 放到 cpu，保存 cpu 到调度协程（或主协程）
     void wxm::Fiber::resume() {
         assert(state == READY);
 
+        FiberControl::set_running_fiber(shared_from_this()); // 提前设置当前协程为运行协程
         if (runInScheduler) {
-            FiberControl::set_running_fiber(shared_from_this());
-            int retSwapContext = swapcontext(&(FiberControl::get_scheduler_fiber()->context), &context);
+            auto runningFiber = FiberControl::get_running_fiber();
+            auto schedulerFiber = FiberControl::get_scheduler_fiber();
+
+            // 保存 cpu 到 schedulerFiber->context，切换 runningFiber->context 到 cpu 并执行。当切换回 schedulerFiber->context 时返回 retSwapContext，-1 为切换失败，0 为成功
+            int retSwapContext = swapcontext(&(schedulerFiber->context), &(runningFiber->context));
             if (retSwapContext != 0) {
-                std::cerr << "resume() from schedulerFiber to this->context failed\n";
+                std::cerr << "resume() from other to schedulerFiber failed\n";
                 assert(retSwapContext == 0);
             }
         }
         else {
-            FiberControl::set_running_fiber(shared_from_this());
-            int retSwapContext = swapcontext(&(FiberControl::get_main_fiber()->context), &context);
+            auto runningFiber = FiberControl::get_running_fiber();
+            auto mainFiber = FiberControl::get_main_fiber();
+
+            int retSwapContext = swapcontext(&(mainFiber->context), &(runningFiber->context));
             if (retSwapContext != 0) {
-                std::cerr << "resume() from mainFiber to this->context failed\n";
+                std::cerr << "resume() from other to mainFiber failed\n";
                 assert(retSwapContext == 0);
             }
         }
     }
 
 
+    /// @brief 调度协程（或主协程） context 放到 cpu，cpu 状态放到当前协程。维护 FiberControl（不够高内聚、低耦合）
+    /// @details 总之，流程可以统一为先维护 runningFiber，然后把 runningFiber->context 放到 cpu，保存 cpu 到当前协程
     void wxm::Fiber::yield() {
         assert(state == RUNNING || state == TERM);
 
         if (state == RUNNING) state = READY;
 
         if (runInScheduler) {
-            FiberControl::set_running_fiber(FiberControl::get_scheduler_fiber());
-            int retSwapContext = swapcontext(&context, &(FiberControl::get_scheduler_fiber()->context));
+            auto schedulerFiber = FiberControl::get_scheduler_fiber();
+            FiberControl::set_running_fiber(schedulerFiber); // 提前设置调度协程为运行协程
+            auto runningFiber = FiberControl::get_running_fiber();
+
+            int retSwapContext = swapcontext(&context, &(runningFiber->context)); // 让出执行权
             if (retSwapContext != 0) {
-                std::cerr << "resume() from this->context to schedulerFiber failed\n";
+                std::cerr << "resume() from other(schedulerFiber) to this->context failed\n";
                 assert(retSwapContext == 0);
             }
         }
         else {
-            FiberControl::set_running_fiber(FiberControl::get_main_fiber());
-            int retSwapContext = swapcontext(&context, &(FiberControl::get_main_fiber()->context));
+            auto mainFiber = FiberControl::get_main_fiber();
+            FiberControl::set_running_fiber(mainFiber); // 提前设置调度协程为运行协程
+            auto runningFiber = FiberControl::get_running_fiber();
+
+            int retSwapContext = swapcontext(&context, &(runningFiber->context)); // 让出执行权
             if (retSwapContext != 0) {
-                std::cerr << "resume() from this->context to mainFiber failed\n";
+                std::cerr << "resume() from other(mainFiber) to this->context failed\n";
                 assert(retSwapContext == 0);
             }
         }

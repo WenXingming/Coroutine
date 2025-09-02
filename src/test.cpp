@@ -6,7 +6,8 @@
 #include <cassert>
 
 #include "Semaphore.h" 
-using namespace wxm;
+// using namespace wxm;
+
 
 /// ==================================================================================
 /// NOTE: 这个单元测试旨在验证您的信号量实现在两个关键场景下的行为是否正确：
@@ -17,21 +18,19 @@ void test_basic_semaphore() {
     wxm::Semaphore sem(1); // 初始计数为1
 
     std::atomic<bool> flag(false);
-    std::thread t1([&]() {
-        // 线程1先获取信号量
+    std::thread t1([&]() { // 线程 1 先获取信号量
         sem.wait();
         flag = true;
         std::cout << "Thread 1: Semaphore acquired." << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000)); // 先不释放，看线程 2 是否能获取
         sem.signal();
         std::cout << "Thread 1: Semaphore freed." << std::endl;
         });
 
     // 主线程等待一小段时间，确保 t1 已经执行
-    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    std::thread t2([&]() {
-        // 线程2尝试获取信号量，由于 t1 还没有释放，它应该被阻塞
+    std::thread t2([&]() { // 线程 2 尝试获取信号量，由于 t1 还没有释放，它应该被阻塞
         std::cout << "Thread 2: Trying to acquire semaphore..." << std::endl;
         assert(flag.load() == true); // 确保在 t2 wait() 之前 t1 已经执行了
         sem.wait();
@@ -45,13 +44,14 @@ void test_basic_semaphore() {
     std::cout << "--- Basic Semaphore Test Passed ---" << std::endl;
 }
 
+
 /// @brief Test Semaphore: 多线程并发控制 (test_concurrency_with_worker_threads)：
 void test_concurrency_with_worker_threads() {
     std::cout << "--- Testing Concurrent Access ---" << std::endl;
 
-    const int thread_count = 10;
+    const int thread_count = 12;
     const int initial_count = 3;
-    wxm::Semaphore sem(initial_count); // 允许3个线程同时访问
+    wxm::Semaphore sem(initial_count); // 允许 3 个线程同时访问
 
     std::atomic<int> running_count(0);
     std::vector<std::thread> workers;
@@ -60,6 +60,7 @@ void test_concurrency_with_worker_threads() {
         workers.emplace_back(std::thread([&]() {
             sem.wait();
             int current_running_count = ++running_count;
+
             std::cout << "Thread " << std::this_thread::get_id() << " acquired semaphore. Current running: " << current_running_count << std::endl;
 
             // 检查并发数是否超过了初始值
@@ -80,35 +81,32 @@ void test_concurrency_with_worker_threads() {
 }
 
 
-/// =========================
+/// ==================================================================================
 /// 测试协程类：Fiber.h、FiberControl.h
 #include "Fiber.h"
 #include "FiberControl.h"
-using namespace wxm;
 
 class Scheduler {
 private:
-    std::vector<std::shared_ptr<Fiber>> m_tasks;
+    std::vector<std::shared_ptr<wxm::Fiber>> tasks;
 public:
 
     // 添加协程调度任务
-    void schedule(std::shared_ptr<Fiber> task) {
-        m_tasks.push_back(task);
+    void submit_task(std::shared_ptr<wxm::Fiber> task) {
+        tasks.push_back(task);
     }
 
     // 执行调度任务
     void run() {
-        std::cout << " number " << m_tasks.size() << std::endl;
+        std::cout << " number " << tasks.size() << std::endl;
 
-        std::shared_ptr<Fiber> task;
-        auto it = m_tasks.begin();
-        while (it != m_tasks.end()) {
+        std::shared_ptr<wxm::Fiber> task;
+        for (auto it = tasks.begin(); it != tasks.end(); ++it) {
             task = *it;
-            // 由主协程切换到子协程，子协程函数运行完毕后自动切换到主协程
-            task->resume();
-            it++;
+            task->resume(); // 由主协程切换到子协程，子协程函数运行完毕后自动切换到主协程
         }
-        m_tasks.clear();
+
+        tasks.clear();
     }
 
 
@@ -117,19 +115,19 @@ public:
 
 void test_fiber_total() {
     std::cout << "--- Testing test_fiber_total ---" << std::endl;
-    // 初始化当前线程的主协程
-    FiberControl::get_running_fiber();
+
+    // wxm::FiberControl::first_create_fiber(); // 初始化当前线程的主协程
     // 创建调度器、添加调度任务（任务和子协程绑定）
     Scheduler sc;
-    for (auto i = 0;i < 20;i++) {
+    for (auto i = 0; i < 20; i++) {
         // 创建子协程
         // 使用共享指针自动管理资源 -> 过期后自动释放子协程创建的资源
         // bind函数 -> 绑定函数和参数用来返回一个函数对象
         auto func = [](int i) {
-            std::cout << "hello world " << i << std::endl;
+            std::cout << "hello world: " << i << std::endl;
             };
-        std::shared_ptr<Fiber> fiber = FiberControl::create_fiber(std::bind(func, i), 0, false);
-        sc.schedule(fiber);
+        std::shared_ptr<wxm::Fiber> fiber = wxm::FiberControl::create_fiber(std::bind(func, i), 0, false);
+        sc.submit_task(fiber);
     }
 
     // 执行调度任务

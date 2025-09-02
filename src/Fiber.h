@@ -42,10 +42,12 @@ namespace wxm {
         std::mutex mutex;
 
     public:
+        // 没写移动构造且定义了构造函数，不会默认生成移动构造。std::move() 时退化到拷贝构造（浅拷贝...）。
+        // 这里拷贝构造又被禁用了，可能直接导致编译错误。干脆直接禁用了吧...用指针管理即可
         Fiber(const Fiber& other) = delete;
         Fiber& operator=(const Fiber& other) = delete;
-        // 没写移动构造且定义了构造函数，不会默认生成移动构造。std::move() 时退化到拷贝构造（浅拷贝...）。
-        // 这里拷贝构造又被禁用了，可能直接导致编译错误。干脆直接禁用了吧...
+        Fiber(const Fiber&& other) = delete;
+        Fiber& operator=(const Fiber&& other) = delete;
         ~Fiber();
 
         void reset(std::function<void()> _cb); // 重用一个协程

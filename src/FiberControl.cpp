@@ -46,7 +46,8 @@ namespace wxm {
 		if (!FiberControl::runningFiber) {
 			first_create_fiber();
 		}
-		// std::shared_ptr<Fiber> fiber = std::make_shared<Fiber>(_cb, _stacksize, _run_in_scheduler); // 构造函数私有，make_shared<>() 无法访问！编译错误
+		// 构造函数私有，make_shared<>() 无法访问！编译错误。只能使用 new 初始化
+		// std::shared_ptr<Fiber> fiber = std::make_shared<Fiber>(_cb, _stacksize, _run_in_scheduler); 
 		std::shared_ptr<Fiber> fiber(new Fiber(_cb, _stacksize, _run_in_scheduler));
 		auto id = get_thread_fiber_count();
 		set_thread_fiber_count(id + 1);
