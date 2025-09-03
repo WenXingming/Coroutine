@@ -35,8 +35,8 @@ namespace wxm {
         bool runInScheduler;            // 是否让出执行权交给调度协程
 
         friend class FiberControl; // FiberControl 需要调用 Fiber 的（私有）构造函数构造 Fiber。（工厂模式）
-        Fiber();
-        Fiber(std::function<void()> _cb, size_t _stacksize = 0, bool _run_in_scheduler = true);
+        Fiber(uint64_t id);
+        Fiber(uint64_t _id, std::function<void()> _cb, size_t _stacksize = 0, bool _run_in_scheduler = true);
 
     public:
         std::mutex mutex;

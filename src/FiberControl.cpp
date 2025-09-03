@@ -26,9 +26,14 @@ namespace wxm {
 
 
 	void FiberControl::first_create_fiber() {
+		uint32_t threadFiberCount = get_thread_fiber_count();
+		FiberControl::set_thread_fiber_count(++threadFiberCount);
+		uint64_t threadFiberId = get_thread_fiber_id();
+		FiberControl::set_thread_fiber_id(threadFiberId + 1);
+
 		// Fiber() 私有，make_shared<T>() 无法访问！编译错误
 		// std::shared_ptr<Fiber> fiber = std::make_shared<Fiber>(); 
-		std::shared_ptr<Fiber> fiber(new Fiber());
+		std::shared_ptr<Fiber> fiber(new Fiber(threadFiberId));
 		FiberControl::set_running_fiber(fiber);
 		FiberControl::set_main_fiber(fiber);
 		FiberControl::set_scheduler_fiber(fiber); // 除非主动设置，主协程默认为调度协程
@@ -36,9 +41,6 @@ namespace wxm {
 		assert(FiberControl::runningFiber == fiber);
 		assert(FiberControl::mainFiber == fiber);
 		assert(FiberControl::schedulerFiber == fiber);
-
-		int threadFiberCount = get_thread_fiber_count();
-		FiberControl::set_thread_fiber_count(++threadFiberCount);
 	}
 
 
@@ -46,11 +48,14 @@ namespace wxm {
 		if (!FiberControl::runningFiber) {
 			first_create_fiber();
 		}
+
+		uint32_t threadFiberCount = get_thread_fiber_count();
+		FiberControl::set_thread_fiber_count(++threadFiberCount);
+		uint64_t threadFiberId = get_thread_fiber_id();
+		FiberControl::set_thread_fiber_id(threadFiberId + 1);
 		// 构造函数私有，make_shared<>() 无法访问！编译错误。只能使用 new 初始化
 		// std::shared_ptr<Fiber> fiber = std::make_shared<Fiber>(_cb, _stacksize, _run_in_scheduler); 
-		std::shared_ptr<Fiber> fiber(new Fiber(_cb, _stacksize, _run_in_scheduler));
-		auto threadFiberCount = get_thread_fiber_count();
-		set_thread_fiber_count(threadFiberCount + 1);
+		std::shared_ptr<Fiber> fiber(new Fiber(threadFiberId, _cb, _stacksize, _run_in_scheduler));
 		return fiber;
 	}
 
