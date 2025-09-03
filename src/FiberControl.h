@@ -23,7 +23,8 @@ namespace wxm {
 		static thread_local std::shared_ptr<Fiber> runningFiber; // 运行中的协程
 		static thread_local std::shared_ptr<Fiber> mainFiber; // 主协程
 		static thread_local std::shared_ptr<Fiber> schedulerFiber; // 调度协程
-		static thread_local int threadFiberCount; // 全局协程 ID 计数器
+		static thread_local uint32_t threadFiberCount; // 全局协程计数器
+		static thread_local uint64_t threadFiberId; // 获取协程 id
 		static thread_local bool debug; // 是否打印 debug 信息
 
 		// 私有函数。如果没有协程，则调用此函数创建主协程（其会创建主协程，并初始化线程中协程的 FiberControl 信息）
@@ -40,8 +41,10 @@ namespace wxm {
 		static void set_main_fiber(std::shared_ptr<Fiber> f);
 		static void set_scheduler_fiber(std::shared_ptr<Fiber> f);
 
-		static int get_thread_fiber_count();
-		static void set_thread_fiber_count(int val);
+		static uint32_t get_thread_fiber_count();
+		static void set_thread_fiber_count(uint32_t val);
+		static uint64_t get_thread_fiber_id();
+		static void set_thread_fiber_id(uint64_t val);
 
 		static bool get_debug();
 	};

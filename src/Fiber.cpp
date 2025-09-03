@@ -17,7 +17,8 @@ namespace wxm {
     wxm::Fiber::Fiber() {
         /* 不可在构造函数调用 shared_from_this()，见 C++ 标准库（第二版）5.2.3。移动到了工厂函数 FiberControl::first_create_fiber 里。
         FiberControl::set_running_fiber(shared_from_this()); */
-        id = FiberControl::get_thread_fiber_count();
+        id = FiberControl::get_thread_fiber_id();
+        FiberControl::set_thread_fiber_id(id + 1);
 
         int retGetContext = getcontext(&context);
         if (retGetContext != 0) {
@@ -38,7 +39,8 @@ namespace wxm {
 
 
     wxm::Fiber::Fiber(std::function<void()> _cb, size_t _stacksize, bool _run_in_scheduler) {
-        id = FiberControl::get_thread_fiber_count();
+        id = FiberControl::get_thread_fiber_id();
+        FiberControl::set_thread_fiber_id(id + 1);
 
         int retGetContext = getcontext(&context); // 使用 getcontext 是先将大部分信息初始化，我们只需要修改我们所使用的部分信息即可
         if (retGetContext != 0) {
@@ -61,9 +63,8 @@ namespace wxm {
 
 
     wxm::Fiber::~Fiber() {
-        std::cout << "Fiber(): child id = " << id << std::endl;
-        int fiberId = FiberControl::get_thread_fiber_count();
-        FiberControl::set_thread_fiber_count(--fiberId);
+        int threadFiberCount = FiberControl::get_thread_fiber_count();
+        FiberControl::set_thread_fiber_count(threadFiberCount - 1);
 
         if (stackPtr) {
             operator delete(stackPtr);
