@@ -17,9 +17,9 @@
 #include <cassert>
 namespace wxm {
 
-
-    class FiberControl; // 头文件不可相互包含，如何解决循环依赖问题？声明、实现分离（.h、.cpp），并在循环依赖的头文件中使用前向声明（源文件可以直接包含两个头文件声明）
-
+    // 头文件不可相互包含，如何解决循环依赖问题？声明、实现分离（.h、.cpp），并在循环依赖的头文件中使用前向声明（源文件可以直接包含两个头文件声明）
+    class FiberControl;
+    
     class Fiber : public std::enable_shared_from_this<Fiber> { // 允许一个类（Fiber）的对象安全地获取一个指向自身的 std::shared_ptr
     private:
         enum State {  // 协程状态：准备、运行、结束
@@ -43,7 +43,7 @@ namespace wxm {
 
     public:
         // 没写移动构造且定义了构造函数，不会默认生成移动构造。std::move() 时退化到拷贝构造（浅拷贝...）。
-        // 这里拷贝构造又被禁用了，可能直接导致编译错误。干脆直接禁用了吧...用指针管理即可
+        // 这里拷贝构造又被禁用了，可能直接导致编译错误。干脆直接禁用了吧...用智能指针管理即可
         Fiber(const Fiber& other) = delete;
         Fiber& operator=(const Fiber& other) = delete;
         Fiber(const Fiber&& other) = delete;

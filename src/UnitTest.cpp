@@ -107,8 +107,8 @@ public:
             // std::cout << "智能指针引用计数, Fiber Id: " << (*it)->get_id() << " reference num: " << (*it).use_count() << std::endl;
         }
 
-        // Erases all the elements. Note that this function only erases the elements, and that if the elements themselves are pointers, the pointed - to memory is not touched in any way.Managing the pointer is the user's responsibility.
-        tasks.clear();
+        //由于在最后一个shared_ptr销毁前内存都不会释放，保证shared_ptr在无用之后不再保留就非常重要了。如果你忘记了销毁程序不再需要的shared_ptr，程序仍会正确执行，但会浪费内存。share_ptr在无用之后仍然保留的一种可能情况是，你将shared_ptr存放在一个容器中，随后重排了容器，从而不再需要某些元素。在这种情况下，你应该确保用erase删除那些不再需要的shared_ptr元素。
+        tasks.clear(); // 当容器中的 shared_ptr 不再被需要时，记得 erase() 这些 shared_ptr
     }
 
 
