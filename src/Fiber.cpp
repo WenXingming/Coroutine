@@ -62,14 +62,15 @@ namespace wxm {
 
 
     wxm::Fiber::~Fiber() {
-        int threadId = FiberControl::get_thread_fiber_count();
-        FiberControl::set_thread_fiber_count(--threadId);
+        std::cout << "Fiber(): child id = " << id << std::endl;
+        int fiberId = FiberControl::get_thread_fiber_count();
+        FiberControl::set_thread_fiber_count(--fiberId);
 
         if (stackPtr) {
             operator delete(stackPtr);
         }
 
-        if (FiberControl::get_debug()) std::cout << "~Fiber(): child id = " << id << std::endl;
+        if (FiberControl::get_debug()) std::cout << "~Fiber(): fiber id = " << id << std::endl;
     }
 
 

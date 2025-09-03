@@ -22,13 +22,13 @@ void test_basic_semaphore() {
         sem.wait();
         flag = true;
         std::cout << "Thread 1: Semaphore acquired." << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000)); // 先不释放，看线程 2 是否能获取
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // 先不释放，看线程 2 是否能获取
         sem.signal();
         std::cout << "Thread 1: Semaphore freed." << std::endl;
         });
 
     // 主线程等待一小段时间，确保 t1 已经执行
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
     std::thread t2([&]() { // 线程 2 尝试获取信号量，由于 t1 还没有释放，它应该被阻塞
         std::cout << "Thread 2: Trying to acquire semaphore..." << std::endl;
@@ -98,14 +98,16 @@ public:
 
     // 执行调度任务
     void run() {
-        std::cout << " number " << tasks.size() << std::endl;
+        std::cout << "Thread's fiber number: " << wxm::FiberControl::get_thread_fiber_count() << std::endl;
 
-        std::shared_ptr<wxm::Fiber> task;
         for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-            task = *it;
-            task->resume(); // 由主协程切换到子协程，子协程函数运行完毕后自动切换到主协程
+            // std::shared_ptr<wxm::Fiber> task = *it;
+            // task->resume(); // 由主协程切换到子协程，子协程函数运行完毕后自动切换到主协程
+            (*it)->resume();
+            // std::cout << "智能指针引用计数, Fiber Id: " << (*it)->get_id() << " reference num: " << (*it).use_count() << std::endl;
         }
 
+        // Erases all the elements. Note that this function only erases the elements, and that if the elements themselves are pointers, the pointed - to memory is not touched in any way.Managing the pointer is the user's responsibility.
         tasks.clear();
     }
 
@@ -118,20 +120,24 @@ void test_fiber_total() {
 
     // wxm::FiberControl::first_create_fiber(); // 初始化当前线程的主协程
     // 创建调度器、添加调度任务（任务和子协程绑定）
-    Scheduler sc;
-    for (auto i = 0; i < 20; i++) {
-        // 创建子协程
-        // 使用共享指针自动管理资源 -> 过期后自动释放子协程创建的资源
-        // bind函数 -> 绑定函数和参数用来返回一个函数对象
-        auto func = [](int i) {
-            std::cout << "hello world: " << i << std::endl;
-            };
-        std::shared_ptr<wxm::Fiber> fiber = wxm::FiberControl::create_fiber(std::bind(func, i), 0, false);
-        sc.submit_task(fiber);
-    }
+    {
+        Scheduler sc;
+        for (auto i = 0; i < 20; i++) {
+            // 创建子协程
+            // 使用共享指针自动管理资源 -> 过期后自动释放子协程创建的资源
+            // bind 函数 -> 绑定函数和参数用来返回一个函数对象
+            auto func = [](int i) {
+                std::cout << "hello world: " << i << std::endl;
+                };
+            std::shared_ptr<wxm::Fiber> fiber = wxm::FiberControl::create_fiber(std::bind(func, i), 0, false);
+            // std::cout << "智能指针引用计数, Fiber Id: " << fiber->get_id() << " reference num: " << fiber.use_count() << std::endl;
+            sc.submit_task(fiber);
+        }
 
-    // 执行调度任务
-    sc.run();
+        // 执行调度任务
+        sc.run();
+
+    }
     std::cout << "--- test_fiber_total Passed ---" << std::endl;
 }
 

@@ -20,9 +20,9 @@ namespace wxm {
 
 	class FiberControl {
 	private:
-		static thread_local std::shared_ptr<Fiber> runningFiber; // 运行中的协程
-		static thread_local std::shared_ptr<Fiber> mainFiber; // 主协程
-		static thread_local std::shared_ptr<Fiber> schedulerFiber; // 调度协程
+		static thread_local std::weak_ptr<Fiber> runningFiber; // 运行中的协程
+		static thread_local std::weak_ptr<Fiber> mainFiber; // 主协程
+		static thread_local std::weak_ptr<Fiber> schedulerFiber; // 调度协程
 		static thread_local int threadFiberCount;		// 全局协程 ID 计数器
 		static thread_local bool debug;
 
