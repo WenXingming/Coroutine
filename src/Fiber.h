@@ -4,7 +4,7 @@
  * @details 自定义实现 C++ 协程类
  * @author wenxingming
  * @date 2025-08-31
- * @note My project address:
+ * @note My project address: https://github.com/WenXingming/Coroutine
  * @cite https://github.com/youngyangyang04/coroutine-lib/tree/main/fiber_lib/2fiber
  */
 
@@ -19,7 +19,7 @@ namespace wxm {
 
     // 头文件不可相互包含，如何解决循环依赖问题？声明、实现分离（.h、.cpp），并在循环依赖的头文件中使用前向声明（源文件可以直接包含两个头文件声明）
     class FiberControl;
-    
+
     class Fiber : public std::enable_shared_from_this<Fiber> { // 允许一个类（Fiber）的对象安全地获取一个指向自身的 std::shared_ptr
     private:
         enum State {  // 协程状态：准备、运行、结束
@@ -35,7 +35,9 @@ namespace wxm {
         bool runInScheduler;            // 是否让出执行权交给调度协程
 
         friend class FiberControl; // FiberControl 需要调用 Fiber 的（私有）构造函数构造 Fiber。（工厂模式）
+        // 创建主协程（在没有调度器时，主协程就可以理解成一个暂存线程当前状态的协程，类似于保存断点。有调度器时就调度器充当此功能）
         Fiber(uint64_t id);
+        // 创建子协程
         Fiber(uint64_t _id, std::function<void()> _cb, size_t _stacksize = 0, bool _run_in_scheduler = true);
 
     public:

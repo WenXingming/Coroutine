@@ -4,7 +4,7 @@
  * @details 主要是维护当前线程上的协程控制信息，方便进行线程内部协程的控制例如协程间的切换、后续调度
  * @author wenxingming
  * @date 2025-08-31
- * @note My project address:
+ * @note My project address: https://github.com/WenXingming/Coroutine
  * @cite https://github.com/youngyangyang04/coroutine-lib/tree/main/fiber_lib/2fiber
  */
 

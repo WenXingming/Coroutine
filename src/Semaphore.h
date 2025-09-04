@@ -4,7 +4,7 @@
  * @details 自定义实现 C++ 信号量
  * @author wenxingming
  * @date 2025-08-29
- * @note My project address:
+ * @note My project address: https://github.com/WenXingming/Coroutine
  * @cite https://github.com/youngyangyang04/coroutine-lib/blob/main/fiber_lib/1thread/thread.h
  */
 

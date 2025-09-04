@@ -1,16 +1,21 @@
+/**
+ * @file UnitTest.cpp
+ * @brief 单元测试
+ * @author wenxingming
+ * @date 2025-08-31
+ * @note My project address: https://github.com/WenXingming/Coroutine
+ */
+
 #include <iostream>
 #include <vector>
 #include <thread>
 #include <chrono>
 #include <atomic>
 #include <cassert>
-
 #include "Semaphore.h" 
-// using namespace wxm;
+#include "Fiber.h"
+#include "FiberControl.h"
 
-
-/// ==================================================================================
-/// NOTE: 这个单元测试旨在验证您的信号量实现在两个关键场景下的行为是否正确：
 
 /// @brief Test Semaphore: 基本阻塞与唤醒 (test_basic_semaphore)
 void test_basic_semaphore() {
@@ -81,16 +86,13 @@ void test_concurrency_with_worker_threads() {
 }
 
 
-/// ==================================================================================
-/// 测试协程类：Fiber.h、FiberControl.h
-#include "Fiber.h"
-#include "FiberControl.h"
-
+/// @brief Test Fiber、FiberControl 功能
+/// @details 单线程调度器（类似于线程池，更加简单，无需加锁且 FCFS 先来先服务）
 class Scheduler {
 private:
     std::vector<std::shared_ptr<wxm::Fiber>> tasks;
-public:
 
+public:
     // 添加协程调度任务
     void submit_task(std::shared_ptr<wxm::Fiber> task) {
         tasks.push_back(task);
@@ -107,14 +109,14 @@ public:
             // std::cout << "智能指针引用计数, Fiber Id: " << (*it)->get_id() << " reference num: " << (*it).use_count() << std::endl;
         }
 
-        //由于在最后一个shared_ptr销毁前内存都不会释放，保证shared_ptr在无用之后不再保留就非常重要了。如果你忘记了销毁程序不再需要的shared_ptr，程序仍会正确执行，但会浪费内存。share_ptr在无用之后仍然保留的一种可能情况是，你将shared_ptr存放在一个容器中，随后重排了容器，从而不再需要某些元素。在这种情况下，你应该确保用erase删除那些不再需要的shared_ptr元素。
-        tasks.clear(); // 当容器中的 shared_ptr 不再被需要时，记得 erase() 这些 shared_ptr
+        // C++标准库（第2版）：由于在最后一个shared_ptr销毁前内存都不会释放，保证shared_ptr在无用之后不再保留就非常重要了。如果你忘记了销毁程序不再需要的shared_ptr，程序仍会正确执行，但会浪费内存。share_ptr在无用之后仍然保留的一种可能情况是，你将shared_ptr存放在一个容器中，随后重排了容器，从而不再需要某些元素。在这种情况下，你应该确保用erase删除那些不再需要的shared_ptr元素。
+        tasks.clear(); // 即当容器中的 shared_ptr 不再被需要时，记得 erase() 这些 shared_ptr
     }
-
 
 };
 
 
+/// @brief 测试 Fiber、FiberControl
 void test_fiber_total() {
     std::cout << "--- Testing test_fiber_total ---" << std::endl;
 
@@ -140,6 +142,7 @@ void test_fiber_total() {
     }
     std::cout << "--- test_fiber_total Passed ---" << std::endl;
 }
+
 
 int main() {
     test_basic_semaphore();

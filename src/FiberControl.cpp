@@ -1,13 +1,11 @@
 /**
  * @file FiberControl.cpp
  * @brief 线程内部协程的控制
- * @details
- * 主要是维护当前线程上的协程控制信息，方便进行线程内部协程的控制例如协程间的切换、后续调度
+ * @details 主要是维护当前线程上的协程控制信息，方便进行线程内部协程的控制例如协程间的切换、后续调度
  * @author wenxingming
  * @date 2025-08-31
- * @note My project address:
- * @cite
- * https://github.com/youngyangyang04/coroutine-lib/tree/main/fiber_lib/2fiber
+ * @note My project address: https://github.com/WenXingming/Coroutine
+ * @cite https://github.com/youngyangyang04/coroutine-lib/tree/main/fiber_lib/2fiber
  */
 
 #include <memory>
@@ -60,7 +58,7 @@ namespace wxm {
 	}
 
 
-	std::shared_ptr<Fiber> FiberControl::get_running_fiber() { // 首先运行该函数会创建主协程
+	std::shared_ptr<Fiber> FiberControl::get_running_fiber() {
 		if (!FiberControl::runningFiber) {
 			first_create_fiber();
 		}
@@ -108,9 +106,9 @@ namespace wxm {
 		FiberControl::threadFiberCount = val;
 	}
 
-    uint64_t FiberControl::get_thread_fiber_id() {
-        return threadFiberId;
-    }
+	uint64_t FiberControl::get_thread_fiber_id() {
+		return threadFiberId;
+	}
 
 	void FiberControl::set_thread_fiber_id(uint64_t val) {
 		threadFiberId = val;

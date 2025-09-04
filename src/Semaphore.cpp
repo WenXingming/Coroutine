@@ -5,7 +5,7 @@
  * @attention cpp 文件定义的成员函数不应该加 inline, undefined reference to `wxm::Semaphore::Semaphore(int)'
  * @author wenxingming
  * @date 2025-08-29
- * @note My project address:
+ * @note My project address: https://github.com/WenXingming/Coroutine
  * @cite https://github.com/youngyangyang04/coroutine-lib/blob/main/fiber_lib/1thread/thread.h
  */
 
